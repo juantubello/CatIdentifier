@@ -13,7 +13,7 @@ def identificar_gato_por_color(image):
     h, w, _ = image_cv.shape
 
     # Recortar área central del plato
-    crop = image_cv[h//3:h*2//3, w//3:w*2//3]
+    crop = image_cv[h//4:h//2, w//4:w*3//4]
 
     # Calcular color promedio
     avg_color = crop.mean(axis=(0, 1))  # BGR
@@ -21,14 +21,17 @@ def identificar_gato_por_color(image):
     brightness = (r + g + b) / 3
 
     print(f"Color promedio: R={r:.0f}, G={g:.0f}, B={b:.0f}, Brightness={brightness:.0f}")
+    
+    brightness = (r + g + b) / 3
 
-    # Nuevas condiciones
-    if brightness > 170 and abs(r - g) < 30 and abs(r - b) < 30 and abs(g - b) < 30:
+    if brightness > 160 and abs(r - g) < 25 and abs(r - b) < 25 and abs(g - b) < 25:
         return "Artemis"     # Blanca
     elif r < 80 and g < 80 and b < 80:
         return "Luna"    # Negra
     else:
         return "Diana"  # Gris
+
+
 
 @app.post("/identificar")
 async def identificar(request: Request):
