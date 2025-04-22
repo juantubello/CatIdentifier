@@ -23,11 +23,11 @@ def identificar_gato_por_color(image):
 
     # Comparar contra colores aproximados
     if r > 180 and g > 180 and b > 180:
-        return "Luna"     # Blanca
+        return "Artemis"     # Blanca
     elif r < 80 and g < 80 and b < 80:
-        return "Diana"    # Negra
+        return "Luna"    # Negra
     else:
-        return "Artemis"  # Gris (intermedio)
+        return "Diana"  # Gris (intermedio)
 
 @app.post("/identificar")
 async def identificar(request: Request):
