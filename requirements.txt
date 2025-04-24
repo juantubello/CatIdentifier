@@ -3,3 +3,4 @@ uvicorn
 pillow
 numpy
 opencv-python-headless
+tensorflow

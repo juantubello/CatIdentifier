@@ -11,6 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY identificador.py .
+COPY modelo_gatas.tflite .
+COPY labels.txt .
 
 EXPOSE 5000
 

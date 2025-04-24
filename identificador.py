@@ -3,39 +3,40 @@ from fastapi.responses import JSONResponse
 from io import BytesIO
 from PIL import Image
 import numpy as np
-import cv2
+import tensorflow as tf
 
 app = FastAPI()
 
-def identificar_gato_por_color(image):
-    # Convertir a OpenCV (BGR)
-    image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    h, w, _ = image_cv.shape
+# Cargar modelo TFLite
+interpreter = tf.lite.Interpreter(model_path="modelo_gatas.tflite")
+interpreter.allocate_tensors()
 
-    # Recortar área central del plato
-    crop = image_cv[h//4:h//2, w//4:w*3//4]
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-    # Calcular color promedio
-    avg_color = crop.mean(axis=(0, 1))  # BGR
-    b, g, r = avg_color
-    brightness = (r + g + b) / 3
+# Cargar etiquetas
+with open("labels.txt", "r") as f:
+    class_names = [line.strip() for line in f.readlines()]
 
-    print(f"Color promedio: R={r:.0f}, G={g:.0f}, B={b:.0f}, Brightness={brightness:.0f}")
-    
-    brightness = (r + g + b) / 3
-
-    if brightness > 160 and abs(r - g) < 25 and abs(r - b) < 25 and abs(g - b) < 25:
-        return "Artemis"     # Blanca
-    elif r < 80 and g < 80 and b < 80:
-        return "Luna"    # Negra
-    else:
-        return "Diana"  # Gris
-
-
+# Preprocesamiento de imagen
+def preprocess_image(image, size):
+    image = image.resize(size)
+    image = np.array(image).astype(np.float32) / 255.0
+    image = np.expand_dims(image, axis=0)
+    return image
 
 @app.post("/identificar")
 async def identificar(request: Request):
     data = await request.body()
     image = Image.open(BytesIO(data)).convert("RGB")
-    gato = identificar_gato_por_color(image)
-    return JSONResponse(content={"gato": gato})
+
+    input_data = preprocess_image(image, (224, 224))  # Ajustá el tamaño si tu modelo necesita otro
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    predicted_index = int(np.argmax(output_data))
+    predicted_label = class_names[predicted_index]
+
+    return JSONResponse(content={"gato": predicted_label})
