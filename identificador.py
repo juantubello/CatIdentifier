@@ -4,11 +4,12 @@ from io import BytesIO
 from PIL import Image
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.applications.efficientnet import preprocess_input
 
 app = FastAPI()
 
 # Cargar modelo TFLite
-interpreter = tf.lite.Interpreter(model_path="modelo_gatas_3.tflite")
+interpreter = tf.lite.Interpreter(model_path="modelo_gatas.tflite")
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
@@ -18,10 +19,11 @@ output_details = interpreter.get_output_details()
 with open("labels.txt", "r") as f:
     class_names = [line.strip() for line in f.readlines()]
 
-# Preprocesamiento de imagen
+# Preprocesamiento de imagen con EfficientNet
 def preprocess_image(image, size):
     image = image.resize(size)
-    image = np.array(image).astype(np.float32) / 255.0
+    image = np.array(image).astype(np.float32)
+    image = preprocess_input(image)  # ✅ CLAVE: mismo preprocesamiento que entrenamiento
     image = np.expand_dims(image, axis=0)
     return image
 
@@ -30,7 +32,7 @@ async def identificar(request: Request):
     data = await request.body()
     image = Image.open(BytesIO(data)).convert("RGB")
 
-    input_data = preprocess_image(image, (224, 224))  # Ajustá el tamaño si tu modelo necesita otro
+    input_data = preprocess_image(image, (224, 224))
 
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
