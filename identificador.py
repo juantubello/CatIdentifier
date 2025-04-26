@@ -30,7 +30,7 @@ async def identificar(request: Request):
     data = await request.body()
     image = Image.open(BytesIO(data)).convert("RGB")
 
-    input_data = preprocess_image(image, (128, 128))  # Ajustá el tamaño si tu modelo necesita otro
+    input_data = preprocess_image(image, (224, 224))  # Ajustá el tamaño si tu modelo necesita otro
 
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
