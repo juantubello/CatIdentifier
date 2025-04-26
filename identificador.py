@@ -9,7 +9,7 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 app = FastAPI()
 
 # Cargar modelo TFLite
-interpreter = tf.lite.Interpreter(model_path="modelo_gatas.tflite")
+interpreter = tf.lite.Interpreter(model_path="modelo_gatas_3.tflite")
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
