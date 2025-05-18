@@ -19,11 +19,14 @@ output_details = interpreter.get_output_details()
 with open("labels.txt", "r") as f:
     class_names = [line.strip() for line in f.readlines()]
 
-# Preprocesamiento de imagen con EfficientNet
+# Umbral de confianza (ajustable)
+UMBRAL_CONF = 0.7
+
+# Preprocesamiento de imagen
 def preprocess_image(image, size):
     image = image.resize(size)
     image = np.array(image).astype(np.float32)
-    image = preprocess_input(image)  # ✅ CLAVE: mismo preprocesamiento que entrenamiento
+    image = preprocess_input(image)  # Mismo preprocesamiento que durante el entrenamiento
     image = np.expand_dims(image, axis=0)
     return image
 
@@ -37,8 +40,17 @@ async def identificar(request: Request):
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
 
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-    predicted_index = int(np.argmax(output_data))
-    predicted_label = class_names[predicted_index]
+    output_data = interpreter.get_tensor(output_details[0]['index'])[0]
 
-    return JSONResponse(content={"gato": predicted_label})
+    max_prob = float(np.max(output_data))
+    predicted_index = int(np.argmax(output_data))
+
+    if max_prob < UMBRAL_CONF:
+        predicted_label = "ninguna"
+    else:
+        predicted_label = class_names[predicted_index]
+
+    return JSONResponse(content={
+        "gato": predicted_label,
+        "confianza": round(max_prob, 3)
+    })
